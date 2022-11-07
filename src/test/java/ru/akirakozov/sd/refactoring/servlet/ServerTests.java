@@ -5,16 +5,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+import ru.akirakozov.sd.refactoring.model.Product;
+import ru.akirakozov.sd.refactoring.repository.Repository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,31 +21,9 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
 public class ServerTests {
-    public static class Product {
-        public String name;
-        public Long price;
-
-        public Product(String name, Long price) {
-            this.name = name;
-            this.price = price;
-        }
-
-        @Override
-        public String toString() {
-            return "(\"" + name + "\" ," +  price + ")";
-        }
-    }
-
     public final static List<Product> products = List.of(new Product("Cucumber", 40L),
             new Product("Potato", 50L),
             new Product("Apple", 60L));
-    public final static String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS PRODUCT" +
-            "(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
-            " NAME           TEXT    NOT NULL, " +
-            " PRICE          INT     NOT NULL)";
-
-    public final static String CLEAN_UP_TABLE = "DELETE FROM PRODUCT";
-    public final static String INSERT_VALUES = "INSERT INTO PRODUCT (NAME, PRICE) VALUES ";
     private AddProductServlet addProductServlet = new AddProductServlet();
     private GetProductsServlet getProductsServlet = new GetProductsServlet();
     private QueryServlet queryServlet = new QueryServlet();
@@ -58,7 +34,7 @@ public class ServerTests {
 
     @BeforeClass
     public static void init() {
-        executeQuery(CREATE_TABLE);
+        Repository.createTable();
     }
 
     @Before
@@ -70,24 +46,13 @@ public class ServerTests {
 
     @After
     public void afterCleanup() {
-        executeQuery(CLEAN_UP_TABLE);
+        Repository.cleanUpTable();
     }
 
     private static void fillDb() {
-        String sql = INSERT_VALUES + products.stream().map(Product::toString).collect(Collectors.joining(",")) +
-                ";";
-        executeQuery(sql);
-    }
-
-    private static void executeQuery(String sql) {
-        try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
-            Statement stmt = c.createStatement();
-
-            stmt.executeUpdate(sql);
-            stmt.close();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        String sql = Repository.INSERT_PRODUCT_TEMPLATE +
+                products.stream().map(Product::toSQLValue).collect(Collectors.joining(",")) + ";";
+        Repository.executeUpdate(sql);
     }
 
     HttpServletRequest mockRequest(Map<String, String> params) {
