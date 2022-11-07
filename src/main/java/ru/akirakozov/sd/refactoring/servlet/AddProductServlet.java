@@ -2,6 +2,7 @@ package ru.akirakozov.sd.refactoring.servlet;
 
 import ru.akirakozov.sd.refactoring.model.Product;
 import ru.akirakozov.sd.refactoring.repository.Repository;
+import ru.akirakozov.sd.refactoring.servlet.utils.HttpResponseBuilder;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -20,8 +21,6 @@ public class AddProductServlet extends HttpServlet {
 
         Repository.addProduct(new Product(name, price));
 
-        response.setContentType("text/html");
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.getWriter().println("OK");
+        HttpResponseBuilder.asText(response, "OK");
     }
 }

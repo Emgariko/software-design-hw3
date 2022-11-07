@@ -2,6 +2,7 @@ package ru.akirakozov.sd.refactoring.servlet;
 
 import ru.akirakozov.sd.refactoring.model.Product;
 import ru.akirakozov.sd.refactoring.repository.Repository;
+import ru.akirakozov.sd.refactoring.servlet.utils.HttpResponseBuilder;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -16,40 +17,25 @@ public class QueryServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String command = request.getParameter("command");
 
+        HttpResponseBuilder builder = new HttpResponseBuilder(response);
         if ("max".equals(command)) {
             Product product = Repository.getProductWithMaxPrice();
-
-            response.getWriter().println("<html><body>");
-            response.getWriter().println("<h1>Product with max price: </h1>");
-
-
-            response.getWriter().println(product.getName() + "\t" + product.getPrice() + "</br>");
-            response.getWriter().println("</body></html>");
+            builder.appendHeader("Product with max price: ").append(product);
         } else if ("min".equals(command)) {
-            response.getWriter().println("<html><body>");
-            response.getWriter().println("<h1>Product with min price: </h1>");
             Product product = Repository.getProductWithMinPrice();
-
-            response.getWriter().println(product.getName() + "\t" + product.getPrice() + "</br>");
-            response.getWriter().println("</body></html>");
+            builder.appendHeader("Product with min price: ").append(product);
         } else if ("sum".equals(command)) {
             int sum = Repository.getProductPricesSum();
-            response.getWriter().println("<html><body>");
-            response.getWriter().println("Summary price: ");
-            response.getWriter().println(sum);
-            response.getWriter().println("</body></html>");
+            builder.append("Summary price: ").append(sum);
         } else if ("count".equals(command)) {
             int count = Repository.getProductsCount();
-            response.getWriter().println("<html><body>");
-            response.getWriter().println("Number of products: ");
-            response.getWriter().println(count);
-            response.getWriter().println("</body></html>");
+            builder.append("Number of products: ").append(count);
         } else {
-            response.getWriter().println("Unknown command: " + command);
+            HttpResponseBuilder.asText(response, "Unknown command: " + command);
+            return;
         }
 
-        response.setContentType("text/html");
-        response.setStatus(HttpServletResponse.SC_OK);
+        builder.buildResponse();
     }
 
 }
