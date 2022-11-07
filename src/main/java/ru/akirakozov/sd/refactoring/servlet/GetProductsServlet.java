@@ -2,6 +2,7 @@ package ru.akirakozov.sd.refactoring.servlet;
 
 import ru.akirakozov.sd.refactoring.model.Product;
 import ru.akirakozov.sd.refactoring.repository.Repository;
+import ru.akirakozov.sd.refactoring.servlet.utils.HttpResponseBuilder;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -18,17 +19,10 @@ public class GetProductsServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         List<Product> products = Repository.selectAll();
 
-        response.getWriter().println("<html><body>");
-
+        HttpResponseBuilder builder = new HttpResponseBuilder(response);
         for (Product product: products) {
-            String name = product.getName();
-            Long price = product.getPrice();
-            response.getWriter().println(name + "\t" + price + "</br>");
+            builder.append(product);
         }
-        response.getWriter().println("</body></html>");
-
-
-        response.setContentType("text/html");
-        response.setStatus(HttpServletResponse.SC_OK);
+        builder.buildResponse();
     }
 }
